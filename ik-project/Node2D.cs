@@ -12,7 +12,7 @@ public class IKTest : Godot.Node2D
 	private int limbTwoLen = 120;
 	private int maxLen;
 	[Export]
-	private int minLen = 10;
+	private int minLen = 20;
 
 
 	// working variables
@@ -27,6 +27,9 @@ public class IKTest : Godot.Node2D
 	private Position2D anchorPosInd;
 	private Position2D targetPosInd;
 	private Position2D jointPosInd;
+	private Line2D anchorTargetLine;
+	private Line2D anchorJointLine;
+	private Line2D jointTargetLine;
 
 	public override void _Ready()
 	{
@@ -34,6 +37,9 @@ public class IKTest : Godot.Node2D
 		anchorPosInd = (Position2D) GetNode("AnchorPos");
 		targetPosInd = (Position2D) GetNode("TargetPos");
 		jointPosInd = (Position2D) GetNode("JointPos");
+		anchorTargetLine = (Line2D) GetNode("AnchorTargetLine");
+		anchorJointLine = (Line2D) GetNode("AnchorJointLine");
+		jointTargetLine = (Line2D) GetNode("JointTargetLine");
 	}
 
 	public override void _PhysicsProcess(float delta) 
@@ -66,7 +72,16 @@ public class IKTest : Godot.Node2D
 
 	private void UpdateIKVisuals()
 	{
+		// update position indicators
 		targetPosInd.Position = targetPos;
 		jointPosInd.Position = jointPos;
+
+		// update lines
+		anchorTargetLine.SetPointPosition(0, anchorPos);
+		anchorTargetLine.SetPointPosition(1, targetPos);
+		anchorJointLine.SetPointPosition(0, anchorPos);
+		anchorJointLine.SetPointPosition(1, jointPos);
+		jointTargetLine.SetPointPosition(0, jointPos);
+		jointTargetLine.SetPointPosition(1, targetPos);
 	}
 }
