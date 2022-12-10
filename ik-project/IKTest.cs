@@ -10,6 +10,8 @@ public class IKTest : Godot.Node2D
 	private bool animated = true;
 	//limb A = calf or forearm, limb B = thigh or upper arm
 	[Export]
+	private float animSpeed = 1f;
+	[Export]
 	private int limbALen = 120;
 	private float aSqr;
 	[Export]
@@ -21,13 +23,11 @@ public class IKTest : Godot.Node2D
 	#endregion
 
 	#region Movement Tracking
-	private float movingDirection = 1; //this should be velocity.angle() (as radians)
 	private float motionCounter = 0.0f;
 	#endregion
 
 	#region Position Variables
 	private Vector2 targetPosition = new Vector2();
-	private Vector2 originPosition = new Vector2();
 	private Vector2 jointPosition = new Vector2();
 	private Vector2 endPosition = new Vector2();
 	#endregion
@@ -66,45 +66,16 @@ public class IKTest : Godot.Node2D
 
 	private Vector2 GetAnimtargetPosition(Vector2 vel)
 	{	
-		/* // motion counter simulation
-		motionCounter += 5.2f * Mathf.Pow(vel.Length() * 3, 0.4f);
+		// velocity modifier which applies to the animation speed and step size
+		// at a max vel of 120 = ~10.5
+		// note: could see if swapping this for a 0-1 easing works better so that
+		// step size can be easily set as the maximum value
+		// note: motion counter + vel mod could be moved to an IK manager later
+		// so that it can be reused for all animations
+		float velMod = Mathf.Pow(vel.Length() * 3f, 0.4f);
 
-		if (motionCounter > 360)
-		{
-			motionCounter = 0;
-		}
-		
-		float animCounter = Mathf.Deg2Rad(motionCounter);
-
-		// this updates based on movement speed
-		float gait = (Mathf.Pow(vel.Length() * 2, 0.4f));
-
-		/* float movingDirection = vel.Normalized().Angle();
-		//GD.Print(movingDirection);
-		float directionScale = Mathf.Cos(movingDirection);
-		GD.Print(directionScale); */
-
-		// this modifies the size of the gait based on leg length
-		// however it is way too large currently when using these formula
-		//float horizontalLenFactor = (maxLen / 4);
-		//float verticalLenFactor = (maxLen / 6);
-		//float horizontalLenFactor = 2;
-		//float verticalLenFactor = 2;
-
-		// this checks the movement angle to apply a modifier to the horizontal aspect
-		// of the movement animation
-		//float movingDirection = Mathf.Rad2Deg(vel.Angle());
-		// find the offset
-		//float ax = (gait * horizontalLenFactor * Mathf.Sin(motionCounter)) * Mathf.Cos(movingDirection);
-		//float ay = gait * verticalLenFactor * (-Mathf.Cos(motionCounter) - 1); */
-
-
-		//float pace = vel.Length() / 120;
-		float pace = Mathf.Pow(vel.Length() * 0.1f, 0.4f);
-
-		//The rate at which the motionCounter increases is the animation speed
-		float animSpeed = 0.5f;
-		motionCounter += animSpeed * pace; 
+		// motion counter increase = animation speed
+		motionCounter += animSpeed * velMod; 
 
 		if (motionCounter > 360)
 		{
@@ -113,22 +84,27 @@ public class IKTest : Godot.Node2D
 
 		float animCounter = Mathf.Deg2Rad(motionCounter);
 
-		// (-Cos(animCounter) - 1) shifts the starting position of the movement
+		// this determines the size of x and y offset in relation to the limb length
+		Vector2 stepSize = new Vector2(
+			3f, 
+			2f
+		);
+
+		// (-Cos(animCounter) - 1) shifts the position of the animation
 		// so that at it's maximum, the offset reaches the target position
 		Vector2 baseOffset = new Vector2(
 			Mathf.Sin(animCounter), 
 			(-Mathf.Cos(animCounter) - 1)
 		);
 		
-		// this determines the size of x and y offset in relation to the limb length
-		Vector2 stepSize = new Vector2(
-			maxLen / 12, 
-			maxLen / 16
-		);
+		// used to scale the horizontal step movement based on direction being travelled
+		float movingDirection = Mathf.Cos(vel.Normalized().Angle());
 
-		float ax = stepSize.x * pace * baseOffset.x;
-		float ay = stepSize.y * pace * baseOffset.y;
-		return new Vector2(ax, ay);
+		//return the animated offset
+		return new Vector2(
+			stepSize.x * velMod * baseOffset.x * movingDirection, 
+			stepSize.y * velMod * baseOffset.y
+		);
 	}
 
 	private void UpdateIK(Vector2 targetPos, Vector2 velocity)
