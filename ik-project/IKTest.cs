@@ -5,6 +5,8 @@ public class IKTest : Godot.Node2D
 {
 	#region Settings
 	[Export]
+	private bool is3D = true;
+	[Export]
 	private int flipped = 1;
 	[Export]
 	private bool animated = true;
@@ -71,7 +73,7 @@ public class IKTest : Godot.Node2D
 		// note: could see if swapping this for a 0-1 easing works better so that
 		// step size can be easily set as the maximum value
 		// note: motion counter + vel mod could be moved to an IK manager later
-		// so that it can be reused for all animations
+		// so that it can be reused for all animations such as bouncing of torso/head
 		float velMod = Mathf.Pow(vel.Length() * 3f, 0.4f);
 
 		// motion counter increase = animation speed
@@ -96,7 +98,7 @@ public class IKTest : Godot.Node2D
 			Mathf.Sin(animCounter), 
 			(-Mathf.Cos(animCounter) - 1)
 		);
-		
+
 		// used to scale the horizontal step movement based on direction being travelled
 		float movingDirection = Mathf.Cos(vel.Normalized().Angle());
 
@@ -105,6 +107,43 @@ public class IKTest : Godot.Node2D
 			stepSize.x * velMod * baseOffset.x * movingDirection, 
 			stepSize.y * velMod * baseOffset.y
 		);
+	}
+
+	private Vector2 Get3DJointPos(Vector2 jointPos, float originAng)
+	{
+		var facingDirection = (GlobalPosition - GetGlobalMousePosition()).Angle();
+		var jointMod = GlobalPosition.x - (GlobalPosition.x + 1 * Mathf.Cos(facingDirection));
+
+		// note a and b might be have to be swapped below.. 
+		// a should be length
+		// b should be angle
+		var a = limbBLen * Mathf.Cos(originAng);
+		var b = GlobalPosition.AngleToPoint(endPosition);
+
+		// x is find hip-foot intersect point for 2 right angle triangles
+		// y is used to foreshorten the knee
+		var i = new Vector2(
+			Position.x + (a * Mathf.Cos(b)),
+			Position.y + (a * Mathf.Sin(b))
+		);
+
+		jointPosInd.Position = i;
+		GD.Print(i);
+
+		var c = i.DistanceTo(jointPosition);
+		var d = i.AngleToPoint(jointPosition);
+
+		var e = new Vector2(
+			c * jointMod * Mathf.Cos(d),
+			c * jointMod * Mathf.Sin(d)
+		);
+
+		var c2 = new Vector2(
+			i.x + e.x,
+			i.y + e.y
+		);
+
+		return new Vector2(c2.x, c2.y);
 	}
 
 	private void UpdateIK(Vector2 targetPos, Vector2 velocity)
@@ -133,14 +172,21 @@ public class IKTest : Godot.Node2D
 		);
 
 		// law of cosines to find origin angle
+		// can multiply the origin angle by 1/-1 to flip it for limbs which don't use
+		// 3D effect
 		float lawOfCosinesCalc = (bSqr + cSqr - aSqr)/(2 * limbBLen * originEndDist);
-		float originAngle = flipped * Mathf.Acos(Mathf.Min(1, Mathf.Max(-1, lawOfCosinesCalc)));
+		float originAngle = Mathf.Acos(Mathf.Min(1, Mathf.Max(-1, lawOfCosinesCalc)));
 
 		// joint position
 		jointPosition = new Vector2(
 			-limbBLen * Mathf.Cos(originAngle - originToEndAngle), 
 			limbBLen * Mathf.Sin(originAngle - originToEndAngle)
 		);
+
+		if (is3D)
+		{
+			jointPosition = Get3DJointPos(jointPosition, originAngle);
+		}
 
 		UpdateIKVisuals();
 	}
@@ -151,7 +197,7 @@ public class IKTest : Godot.Node2D
 		// update position indicators
 		originPosInd.Position = Position;
 		endPosInd.Position = endPosition;
-		jointPosInd.Position = jointPosition;
+		//jointPosInd.Position = jointPosition;
 
 		// update lines
 		originEndLine.SetPointPosition(0, Position);
