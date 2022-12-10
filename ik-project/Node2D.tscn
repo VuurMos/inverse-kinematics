@@ -26,8 +26,6 @@ modulate = Color( 0.00784314, 1, 0, 1 )
 scale = Vector2( 0.1, 0.1 )
 texture = ExtResource( 2 )
 
-[node name="Camera2D" type="Camera2D" parent="."]
-
 [node name="OriginEndLine" type="Line2D" parent="."]
 points = PoolVector2Array( 0, 0, 0, 0 )
 width = 4.0
@@ -41,3 +39,11 @@ default_color = Color( 0, 0, 0, 1 )
 points = PoolVector2Array( 0, 0, 0, 0 )
 width = 8.0
 default_color = Color( 0, 0, 0, 1 )
+
+[node name="IKTarget" type="Position2D" parent="."]
+position = Vector2( 0, 199 )
+
+[node name="Sprite" type="Sprite" parent="IKTarget"]
+modulate = Color( 0.709804, 0, 1, 1 )
+scale = Vector2( 0.1, 0.1 )
+texture = ExtResource( 2 )

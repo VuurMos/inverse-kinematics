@@ -7,7 +7,6 @@ var _move_direction: Vector2 = Vector2.ZERO
 var _velocity: Vector2 = Vector2.ZERO
 
 onready var ik = $Node2D
-onready var ik_target = $IKTarget
 
 func _get_direction_input() -> Vector2:
 	var direction_input = Vector2.ZERO
@@ -38,5 +37,5 @@ func _physics_process(delta):
 	
 	_move()
 	
-	ik.UpdateIK(ik_target.global_position, _velocity)
+	ik.UpdateIK(_velocity)
 

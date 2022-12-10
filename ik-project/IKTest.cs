@@ -7,8 +7,6 @@ public class IKTest : Godot.Node2D
 	[Export]
 	private bool is3D = true;
 	[Export]
-	private int flipped = 1;
-	[Export]
 	private bool animated = true;
 	//limb A = calf or forearm, limb B = thigh or upper arm
 	[Export]
@@ -35,6 +33,7 @@ public class IKTest : Godot.Node2D
 	#endregion
 
 	#region Visual Indicators
+	private Position2D ikTarget;
 	private Position2D originPosInd;
 	private Position2D endPosInd;
 	private Position2D jointPosInd;
@@ -51,6 +50,7 @@ public class IKTest : Godot.Node2D
 
 	private void GetNodes()
 	{
+		ikTarget = (Position2D) GetNode("IKTarget");
 		originPosInd = (Position2D) GetNode("OriginPos");
 		endPosInd = (Position2D) GetNode("EndPos");
 		jointPosInd = (Position2D) GetNode("JointPos");
@@ -109,54 +109,42 @@ public class IKTest : Godot.Node2D
 		);
 	}
 
-	private Vector2 Get3DJointPos(Vector2 jointPos, float originAng)
+	private Vector2 Get3DJointPos(Vector2 jointPos, float originAng, Vector2 endPos)
 	{
-		var facingDirection = (GlobalPosition - GetGlobalMousePosition()).Angle();
-		var jointMod = GlobalPosition.x - (GlobalPosition.x + 1 * Mathf.Cos(facingDirection));
+		// note: these two values can be applied to other animations to provide 
+		// look offsets
+		float facingDirection = (GlobalPosition - GetGlobalMousePosition()).Angle();
+		float jointMod = GlobalPosition.x - (GlobalPosition.x + 1 * Mathf.Cos(facingDirection));
+		
+		// find the intersect point of the origin-end line
+		float intDist = limbBLen * Mathf.Cos(originAng);
+		float intAng = (GlobalPosition + endPos).AngleToPoint(GlobalPosition);
 
-		// note a and b might be have to be swapped below.. 
-		// a should be length
-		// b should be angle
-		var a = limbBLen * Mathf.Cos(originAng);
-		var b = GlobalPosition.AngleToPoint(endPosition);
-
-		// x is find hip-foot intersect point for 2 right angle triangles
-		// y is used to foreshorten the knee
-		var i = new Vector2(
-			Position.x + (a * Mathf.Cos(b)),
-			Position.y + (a * Mathf.Sin(b))
+		Vector2 originEndIntersect = new Vector2(
+			intDist * Mathf.Cos(intAng),
+			intDist * Mathf.Sin(intAng)
 		);
 
-		jointPosInd.Position = i;
-		GD.Print(i);
+		// find the 3D joint position
+		float jointIntDist = originEndIntersect.DistanceTo(jointPos);
+		float jointIntAng = originEndIntersect.AngleToPoint(jointPos);
 
-		var c = i.DistanceTo(jointPosition);
-		var d = i.AngleToPoint(jointPosition);
-
-		var e = new Vector2(
-			c * jointMod * Mathf.Cos(d),
-			c * jointMod * Mathf.Sin(d)
+		Vector2 jointPos3D = new Vector2(
+			originEndIntersect.x + (jointIntDist * -jointMod * Mathf.Cos(jointIntAng)),
+			originEndIntersect.y + (jointIntDist * -jointMod * Mathf.Sin(jointIntAng))
 		);
 
-		var c2 = new Vector2(
-			i.x + e.x,
-			i.y + e.y
-		);
-
-		return new Vector2(c2.x, c2.y);
+		return jointPos3D;
 	}
 
-	private void UpdateIK(Vector2 targetPos, Vector2 velocity)
+	private void UpdateIK(Vector2 velocity)
 	{
+		targetPosition = ikTarget.GlobalPosition;
 		// note: the target position has to be in range for the animated offset to work correctly.
 		if (animated)
 		{
 			var animPos = GetAnimtargetPosition(velocity);
-			targetPosition = new Vector2(targetPos.x + animPos.x, targetPos.y + animPos.y);
-		}
-		else
-		{
-			targetPosition = targetPos;
+			targetPosition = new Vector2(targetPosition.x + animPos.x, targetPosition.y + animPos.y);
 		}
 
 		// set key variables using target position
@@ -185,7 +173,8 @@ public class IKTest : Godot.Node2D
 
 		if (is3D)
 		{
-			jointPosition = Get3DJointPos(jointPosition, originAngle);
+			//jointPosition = Get3DJointPos(jointPosition, originAngle);
+			jointPosition = Get3DJointPos(jointPosition, originAngle, endPosition);
 		}
 
 		UpdateIKVisuals();
@@ -197,7 +186,7 @@ public class IKTest : Godot.Node2D
 		// update position indicators
 		originPosInd.Position = Position;
 		endPosInd.Position = endPosition;
-		//jointPosInd.Position = jointPosition;
+		jointPosInd.Position = jointPosition;
 
 		// update lines
 		originEndLine.SetPointPosition(0, Position);
