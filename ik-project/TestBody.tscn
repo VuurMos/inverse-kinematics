@@ -11,6 +11,10 @@ radius = 30.5941
 script = ExtResource( 3 )
 
 [node name="Node2D" parent="." instance=ExtResource( 1 )]
+position = Vector2( 17, 0 )
+
+[node name="Node2D2" parent="." instance=ExtResource( 1 )]
+position = Vector2( -17, 0 )
 
 [node name="Sprite" type="Sprite" parent="."]
 position = Vector2( 0, -33 )

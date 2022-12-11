@@ -28,6 +28,7 @@ public class IKTest : Godot.Node2D
 
 	#region Position Variables
 	private Vector2 targetPosition = new Vector2();
+	private Vector2 originPosition = new Vector2();
 	private Vector2 jointPosition = new Vector2();
 	private Vector2 endPosition = new Vector2();
 	#endregion
@@ -173,7 +174,6 @@ public class IKTest : Godot.Node2D
 
 		if (is3D)
 		{
-			//jointPosition = Get3DJointPos(jointPosition, originAngle);
 			jointPosition = Get3DJointPos(jointPosition, originAngle, endPosition);
 		}
 
@@ -182,16 +182,15 @@ public class IKTest : Godot.Node2D
 
 	private void UpdateIKVisuals()
 	{
-		// note: Position refers to the local ik origin position
 		// update position indicators
-		originPosInd.Position = Position;
+		originPosInd.Position = originPosition;
 		endPosInd.Position = endPosition;
 		jointPosInd.Position = jointPosition;
 
 		// update lines
-		originEndLine.SetPointPosition(0, Position);
+		originEndLine.SetPointPosition(0, originPosition);
 		originEndLine.SetPointPosition(1, endPosition);
-		originJointLine.SetPointPosition(0, Position);
+		originJointLine.SetPointPosition(0, originPosition);
 		originJointLine.SetPointPosition(1, jointPosition);
 		jointEndLine.SetPointPosition(0, jointPosition);
 		jointEndLine.SetPointPosition(1, endPosition);
