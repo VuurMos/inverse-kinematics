@@ -10,16 +10,18 @@ public class IKTest : Godot.Node2D
 	private bool animated = true;
 	//limb A = calf or forearm, limb B = thigh or upper arm
 	[Export]
+	private int flippedAnim = 1;
+	[Export]
 	private float animSpeed = 1f;
 	[Export]
-	private int limbALen = 120;
+	private int limbALen = 7;
 	private float aSqr;
 	[Export]
-	private int limbBLen = 100;
+	private int limbBLen = 7;
 	private float bSqr;
 	private int maxLen;
 	[Export]
-	private int minLen = 20;
+	private int minLen = 2;
 	#endregion
 
 	#region Movement Tracking
@@ -35,10 +37,10 @@ public class IKTest : Godot.Node2D
 
 	#region Visual Indicators
 	private Position2D ikTarget;
-	private Position2D originPosInd;
+/* 	private Position2D originPosInd;
 	private Position2D endPosInd;
-	private Position2D jointPosInd;
-	private Line2D originEndLine;
+	private Position2D jointPosInd; */
+/* 	private Line2D originEndLine; */
 	private Line2D originJointLine;
 	private Line2D jointEndLine;
 	#endregion
@@ -52,10 +54,10 @@ public class IKTest : Godot.Node2D
 	private void GetNodes()
 	{
 		ikTarget = (Position2D) GetNode("IKTarget");
-		originPosInd = (Position2D) GetNode("OriginPos");
+/* 		originPosInd = (Position2D) GetNode("OriginPos");
 		endPosInd = (Position2D) GetNode("EndPos");
-		jointPosInd = (Position2D) GetNode("JointPos");
-		originEndLine = (Line2D) GetNode("OriginEndLine");
+		jointPosInd = (Position2D) GetNode("JointPos"); */
+/* 		originEndLine = (Line2D) GetNode("OriginEndLine"); */
 		originJointLine = (Line2D) GetNode("OriginJointLine");
 		jointEndLine = (Line2D) GetNode("JointEndLine");
 	}
@@ -76,7 +78,6 @@ public class IKTest : Godot.Node2D
 		// note: motion counter + vel mod could be moved to an IK manager later
 		// so that it can be reused for all animations such as bouncing of torso/head
 		float velMod = Mathf.Pow(vel.Length() * 3f, 0.4f);
-
 		// motion counter increase = animation speed
 		motionCounter += animSpeed * velMod; 
 
@@ -89,15 +90,15 @@ public class IKTest : Godot.Node2D
 
 		// this determines the size of x and y offset in relation to the limb length
 		Vector2 stepSize = new Vector2(
-			3f, 
-			2f
+			0.2f, 
+			0.1f
 		);
 
 		// (-Cos(animCounter) - 1) shifts the position of the animation
 		// so that at it's maximum, the offset reaches the target position
 		Vector2 baseOffset = new Vector2(
 			Mathf.Sin(animCounter), 
-			(-Mathf.Cos(animCounter) - 1)
+			(-Mathf.Cos(animCounter) - 1 * flippedAnim)
 		);
 
 		// used to scale the horizontal step movement based on direction being travelled
@@ -105,8 +106,8 @@ public class IKTest : Godot.Node2D
 
 		//return the animated offset
 		return new Vector2(
-			stepSize.x * velMod * baseOffset.x * movingDirection, 
-			stepSize.y * velMod * baseOffset.y
+			stepSize.x * velMod * baseOffset.x * movingDirection * flippedAnim, 
+			stepSize.y * velMod * baseOffset.y * flippedAnim
 		);
 	}
 
@@ -116,7 +117,7 @@ public class IKTest : Godot.Node2D
 		// look offsets
 		float facingDirection = (GlobalPosition - GetGlobalMousePosition()).Angle();
 		float jointMod = GlobalPosition.x - (GlobalPosition.x + 1 * Mathf.Cos(facingDirection));
-		
+
 		// find the intersect point of the origin-end line
 		float intDist = limbBLen * Mathf.Cos(originAng);
 		float intAng = (GlobalPosition + endPos).AngleToPoint(GlobalPosition);
@@ -183,13 +184,13 @@ public class IKTest : Godot.Node2D
 	private void UpdateIKVisuals()
 	{
 		// update position indicators
-		originPosInd.Position = originPosition;
+/* 		originPosInd.Position = originPosition;
 		endPosInd.Position = endPosition;
-		jointPosInd.Position = jointPosition;
+		jointPosInd.Position = jointPosition; */
 
 		// update lines
-		originEndLine.SetPointPosition(0, originPosition);
-		originEndLine.SetPointPosition(1, endPosition);
+/* 		originEndLine.SetPointPosition(0, originPosition);
+		originEndLine.SetPointPosition(1, endPosition); */
 		originJointLine.SetPointPosition(0, originPosition);
 		originJointLine.SetPointPosition(1, jointPosition);
 		jointEndLine.SetPointPosition(0, jointPosition);
